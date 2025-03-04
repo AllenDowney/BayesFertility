@@ -1,11 +1,14 @@
 """Supporting code fot the BayesFertility repository."""
 
+import os
 import re
 
+import arviz as az
 import matplotlib.image as mpimg
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import pymc as pm
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from scipy.stats import beta, norm
 
@@ -172,9 +175,7 @@ def add_subtext(text, x=0, y=-0.25):
         text: string
     """
     ax = plt.gca()
-    plt.figtext(
-        x, y, text, ha="left", va="bottom", fontsize=8, transform=ax.transAxes
-    )
+    plt.figtext(x, y, text, ha="left", va="bottom", fontsize=8, transform=ax.transAxes)
 
 
 def add_title(title, subtitle, pad=25):
@@ -343,7 +344,9 @@ def estimate_columns(df, columns, values):
         subset = data.dropna(subset=column)
         series = subset[column].isin(values)
         weight = subset["weight"]
-        res.loc[column] = estimate_proportion_wilson(series, weight, confidence_level=0.84)
+        res.loc[column] = estimate_proportion_wilson(
+            series, weight, confidence_level=0.84
+        )
 
     return res * 100
 
@@ -471,3 +474,40 @@ def resample_by_cycle(unweighted):
         dfs.append(df)
 
     return pd.concat(dfs).reset_index(drop=True)
+
+
+def load_idata_or_sample(
+    model: pm.Model, filename: str, force_run: bool = False, **sample_options
+) -> az.InferenceData:
+    """
+    Runs PyMC sampling and saves the results to a NetCDF file, or loads existing results from the file.
+
+    Load existing idata if the file exists and force_run is False.
+    Runs the sampler and saves the idata if the file doesn't exist or force_run is True.
+
+    Args:
+        model (pm.Model):
+            The PyMC model object to sample from.
+        filename (str):
+            Path to the NetCDF file to save to or load from.
+        force_run (bool):
+            If true, run the sampler even if the file exists.
+        **sample_options:
+            Additional keyword arguments passed directly to `pm.sample()`.
+
+    Returns:
+        az.InferenceData:
+            The idata (posterior samples) as an ArviZ InferenceData object.
+
+    """
+    if os.path.exists(filename) and not force_run:
+        idata = az.from_netcdf(filename)
+        print(f"Loaded idata from {filename}")
+    else:
+        with model:
+            idata = pm.sample(**sample_options)
+
+        az.to_netcdf(idata, filename)
+        print(f"Saved new idata to {filename}")
+
+    return idata
