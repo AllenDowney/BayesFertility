@@ -502,25 +502,103 @@ def load_idata_or_sample(
 
 
 # =============================================================================
-# System Functions
+# Regression Testing Functions
 # =============================================================================
 
 
-def beep(duration=0.5, frequency=440):
-    """Make a beep sound to notify when a long-running process completes.
+def save_baseline_results(version, alpha_summary, beta_summary, cfr_df, cohort_labels, age_labels):
+    """Save baseline results for regression testing.
     
     Args:
-        duration: Duration of the beep in seconds (default: 0.5)
-        frequency: Frequency of the beep in Hz (default: 440, A4 note)
-    
-    Uses IPython Audio to play a sine wave beep. Works in Jupyter notebooks.
+        version: string version identifier (e.g., 'v1.0')
+        alpha_summary: DataFrame with cohort effects summary
+        beta_summary: DataFrame with age effects summary
+        cfr_df: Series or DataFrame with CFR predictions
+        cohort_labels: array of cohort labels
+        age_labels: array of age labels
     """
-    sample_rate = 22050
+    os.makedirs("results", exist_ok=True)
+    filename = f"results/fertility_cps_{version}.h5"
+    
+    # Prepare alpha data
+    alpha_df = pd.DataFrame({
+        'cohort': cohort_labels,
+        'mean': alpha_summary['mean'].values,
+        'hdi_lower': alpha_summary['hdi_3%'].values,
+        'hdi_upper': alpha_summary['hdi_97%'].values
+    })
+    
+    # Prepare beta data
+    beta_df = pd.DataFrame({
+        'age': age_labels,
+        'mean': beta_summary['mean'].values,
+        'hdi_lower': beta_summary['hdi_3%'].values,
+        'hdi_upper': beta_summary['hdi_97%'].values
+    })
+    
+    # Prepare CFR data
+    if isinstance(cfr_df, pd.Series):
+        cfr_data = pd.DataFrame({
+            'cohort': cfr_df.index,
+            'mean': cfr_df.values
+        })
+    else:
+        # Assume DataFrame with 'cohort', 'mean', 'low', 'high' columns
+        # Use the 'cohort' column, not the index
+        cfr_data = pd.DataFrame({
+            'cohort': cfr_df['cohort'].values,
+            'mean': cfr_df['mean'].values
+        })
+        if 'low' in cfr_df.columns:
+            cfr_data['hdi_lower'] = cfr_df['low'].values
+        if 'high' in cfr_df.columns:
+            cfr_data['hdi_upper'] = cfr_df['high'].values
+    
+    # Save to HDF5
+    alpha_df.to_hdf(filename, key='alpha', mode='w')
+    beta_df.to_hdf(filename, key='beta', mode='a')
+    cfr_data.to_hdf(filename, key='cfr_df', mode='a')
+    
+    # Save metadata
+    metadata = pd.Series({
+        'version': version,
+        'timestamp': pd.Timestamp.now().isoformat()
+    })
+    metadata.to_hdf(filename, key='metadata', mode='a')
+    
+    print(f"Saved baseline results to {filename}")
 
-    t = np.linspace(0, duration, int(sample_rate * duration))
-    beep_sound = np.sin(2 * np.pi * frequency * t)
 
-    display(Audio(beep_sound, rate=sample_rate, autoplay=True))
+def load_baseline_results(version):
+    """Load baseline results for comparison.
+    
+    Args:
+        version: string version identifier (e.g., 'v1.0')
+        
+    Returns:
+        dict with keys 'alpha', 'beta', 'cfr_df', 'metadata'
+    """
+    filename = f"results/fertility_cps_{version}.h5"
+    if not os.path.exists(filename):
+        raise FileNotFoundError(f"Baseline results not found: {filename}")
+    
+    # Check which key exists for backward compatibility
+    try:
+        pd.read_hdf(filename, key='cfr_df')
+        cfr_key = 'cfr_df'
+    except KeyError:
+        try:
+            pd.read_hdf(filename, key='cfr_age48')
+            cfr_key = 'cfr_age48'
+        except KeyError:
+            raise KeyError(f"Neither 'cfr_df' nor 'cfr_age48' found in {filename}")
+    
+    return {
+        'alpha': pd.read_hdf(filename, key='alpha'),
+        'beta': pd.read_hdf(filename, key='beta'),
+        'cfr_df': pd.read_hdf(filename, key=cfr_key),
+        'metadata': pd.read_hdf(filename, key='metadata')
+    }
 
 
 # =============================================================================
