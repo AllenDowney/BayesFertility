@@ -1,0 +1,22 @@
+# See docs at: https://mystmd.org/guide/frontmatter
+version: 1
+
+project:
+  title: Bayesian Fertility Rate Projections
+  # description: Modeling and projecting cohort fertility rates using US Census CPS data
+  # keywords: [fertility, bayesian, demographics, cohort analysis]
+  # authors: []
+  github: https://github.com/AllenDowney/BayesFertility
+  toc:
+    - file: index.md
+    - file: tech_report.md
+      title: Technical Report
+
+site:
+  template: book-theme
+  title: Bayesian Fertility Rate Projections
+  options:
+    logo_text: Bayesian Fertility Rate Projections
+    # favicon: favicon.ico
+    # logo: site_logo.png
+
