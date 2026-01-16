@@ -2,14 +2,14 @@
 
 ## Summary
 
-This report presents a Bayesian statistical model for projecting cohort fertility rates using US Census Current Population Survey (CPS) data spanning 1976-2024. The model uses a hierarchical log-linear structure with Gaussian random walk priors to capture smooth temporal changes in age-specific fertility patterns across birth cohorts. **The primary model (Version 4.0)** extends the base model to explicitly capture cohort-specific timing shifts in childbearing, separating *quantum* (how many children) from *tempo* (when they are born).
+This report presents a Bayesian statistical model for projecting cohort fertility rates using US Census Current Population Survey (CPS) data spanning 1976-2024. The model uses a hierarchical log-linear structure with Gaussian random walk priors to capture smooth temporal changes in age-specific fertility patterns across birth cohorts. **The primary model (Version 4)** extends the base model to explicitly capture cohort-specific timing shifts in childbearing, separating *quantum* (how many children) from *tempo* (when they are born).
 
 **Key findings:**
 - Cohort Completed Fertility Rates (CFR) have been declining for cohorts born after 1980
 - Model projections suggest CFR could drop to 0.78-0.89 for cohorts born in the 2000s
 - Clear postponement of childbearing detected in recent cohorts (positive timing shifts γ)
 - Backtesting demonstrates excellent agreement with historical Census data (correlation = 0.9998)
-- The extended model (v4.0) provides superior fit to data (R² = 0.999, ΔWAIC ≈ 438 vs. base model)
+- The extended model (v4) provides superior fit to data (R² = 0.999, ΔWAIC ≈ 438 vs. base model)
 - The resampling approach successfully incorporates survey weights while maintaining model tractability
 
 ## 1. Introduction
@@ -64,23 +64,6 @@ The CPS is a monthly household survey conducted by the US Census Bureau. In June
 - The fertility supplement weight is identical to the basic survey sample weight
 - Weights account for sampling design, non-response, and post-stratification adjustments
 
-#### Historical Census Tables
-
-For validation, we use Census historical time series tables (Table H2) that provide:
-- Cohort fertility rates by birth year
-- Age-specific fertility rates over time
-- Total Completed Fertility Rates (CFR) for completed cohorts
-
-Our preprocessing validates against this data:
-
-![CFR comparison](figs/cfr_comparison.png)
-
-The close agreement between CPS-computed CFR and Census historical data validates our preprocessing pipeline and weight handling approach:
-- **Correlation: 0.9998**
-- **Mean absolute difference: 0.0031** 
-- **Maximum absolute difference: 0.0353**
-
-This exceptional agreement confirms that our preprocessing correctly handles the CPS data and survey weights.
 
 ### 2.2 Data Preprocessing
 
@@ -116,28 +99,6 @@ See `notebooks/process_cps.ipynb` for full preprocessing code.
 - Maintains computational tractability for Bayesian inference
 - Alternative approaches (weighted likelihood, continuous distributions) introduce additional complexity
 
-**Validation**: We validate the resampling approach by comparing weighted means with resampled means:
-
-![Parity by birth cohort](figs/parity_by_birth_group.png)
-
-The comparison shows that resampled data closely matches the weighted population distribution while maintaining integer counts suitable for the Poisson likelihood.
-
-![Parity by age group](figs/parity_by_age_group.png)
-
-Both birth cohort and age group patterns are well-preserved through the resampling process.
-
-**Detailed comparison of weighted vs sampled data**:
-
-![Weighted vs sampled scatter plots](figs/weighted_vs_sampled_scatter.png)
-
-The scatter plots show strong agreement between weighted aggregation and resampling:
-- **Total parity (sum_df) correlation: 0.9996** - Nearly perfect agreement
-- **Count correlation: 0.8744** - Good agreement despite resampling variability
-- **Mean parity correlation: 0.8543** - Moderate agreement with mean absolute difference of 0.35 children
-
-The high correlation for total parity indicates that the resampled approach accurately preserves the population distribution while producing integer values suitable for Poisson likelihood. The lower correlation for mean parity reflects natural variance in the resampling process but remains acceptable for modeling purposes.
-
-See `jb/tables/process_cps_log.txt` for detailed preprocessing statistics.
 
 ### 2.4 Data Structure
 
@@ -221,9 +182,9 @@ This captures the characteristic age-fertility curve (low at young ages, peak in
 
 ### 3.3 Model Versions
 
-This report presents results from **Version 4.0**, which extends the base model with cohort-specific timing shift parameters:
+This report presents results from **Version 4**, which extends the base model with cohort-specific timing shift parameters:
 
-**Version 4.0** (primary - with timing shifts):
+**Version 4** (primary - with timing shifts):
 - Base model: log(λ_ij) = α_i + β_j
 - Extended: log(λ_ij) = α_i + β_j + γ_i × age_centered_j
 - **γ_i**: Timing shift parameter (positive = delayed childbearing)
@@ -231,7 +192,7 @@ This report presents results from **Version 4.0**, which extends the base model 
 - Allows age-fertility curve to shift across cohorts
 - 77 total parameters (30 cohorts × (α + γ) + 14 ages × β + 3 hyperparameters)
 
-**Version 3.0** (comparison - base model):
+**Version 3** (comparison - base model):
 - Standard log-linear model without timing shifts
 - All cohorts share the same age-fertility profile
 - 46 total parameters
@@ -269,14 +230,14 @@ For each cohort and each posterior sample:
 
 ## 4. Results
 
-### 4.1 Model Parameters (Version 4.0)
+### 4.1 Model Parameters (Version 4)
 
 **Hyperparameters** (estimated from data):
 - **σ_α (cohort random walk)**: 0.149 (94% HDI: [0.086, 0.213])
 - **σ_β (age random walk)**: 0.781 (94% HDI: [0.558, 1.034])
 - **σ_γ (timing shift random walk)**: 0.013 (94% HDI: [0.008, 0.017])
 
-The small value of σ_γ indicates timing shifts change smoothly across cohorts. The larger σ_α (compared to v3.0) reflects that some cohort variation is now captured by timing shifts rather than baseline fertility. The σ_β remains similar, indicating age effects are still the most variable component.
+The small value of σ_γ indicates timing shifts change smoothly across cohorts. The larger σ_α (compared to v3) reflects that some cohort variation is now captured by timing shifts rather than baseline fertility. The σ_β remains similar, indicating age effects are still the most variable component.
 
 ### 4.2 Timing Shifts Across Cohorts
 
@@ -299,7 +260,7 @@ This pattern is consistent with well-documented demographic trends: the **postpo
 
 ### 4.3 Cohort Effects
 
-![Cohort effects over time](figs/cohort_effects.png)
+![Cohort effects over time](figs/cohort_effects_v4.png)
 
 **Cohort effects (α)** summary:
 - **Range**: -0.95 to +0.38 (log scale)
@@ -310,13 +271,13 @@ This pattern is consistent with well-documented demographic trends: the **postpo
 
 After accounting for timing shifts (γ), the cohort effects show that baseline fertility peaked for the 1960s cohorts, remained relatively stable through the 1980s, and has been declining steadily since then. The decline accelerates for cohorts born after 1990. 
 
-**Note**: The peak cohort shifted from 1934 (in v3.0) to 1964 (in v4.0) because v4.0 explicitly models timing—the 1934 cohort had high total fertility but earlier childbearing (negative γ), while the 1964 cohort represents high baseline fertility with more typical timing.
+**Note**: The peak cohort shifted from 1934 (in v3) to 1964 (in v4) because v4 explicitly models timing—the 1934 cohort had high total fertility but earlier childbearing (negative γ), while the 1964 cohort represents high baseline fertility with more typical timing.
 
 The rate of decline for recent cohorts (1980-2000) remains comparable to the post-baby boom decline, both showing drops of approximately 1 child per woman over 20 years. The key difference is that the current decline starts from a much lower baseline.
 
 ### 4.4 Age Effects
 
-![Age effects by age group](figs/age_effects.png)
+![Age effects by age group](figs/age_effects_v4.png)
 
 **Age effects (β)** summary:
 - **Range**: -7.05 to -1.13 (log scale)
@@ -338,13 +299,13 @@ The dotted lines show model predictions, while points show observed mean parity.
 
 **Comparison with Census data**:
 
-![CFR predictions vs actual Census data](figs/cfr_vs_actual.png)
+![CFR predictions vs actual Census data](figs/cfr_vs_actual_v4.png)
 
 The model's predictions align well with actual Census CFR data for completed cohorts, providing confidence in the projections for incomplete cohorts.
 
 ### 4.6 Cohort Fertility Projections
 
-![Projected CFR by birth cohort](figs/cfr_prediction.png)
+![Projected CFR by birth cohort](figs/cfr_vs_actual_v4.png)
 
 **Key findings** (CFR measured at age 42):
 
@@ -437,7 +398,7 @@ The declining fertility trend reflects multiple factors:
    - α captures overall fertility levels by cohort
    - β captures the age-fertility profile
    - γ captures timing shifts (postponement/acceleration of childbearing)
-6. **Separates tempo from quantum**: The extended model (v4.0) explicitly distinguishes between changes in timing (when) vs. total fertility (how many)
+6. **Separates tempo from quantum**: The extended model (v4) explicitly distinguishes between changes in timing (when) vs. total fertility (how many)
 7. **Conservative projections**: Gaussian random walks do not extrapolate trends—they assume recent patterns persist in the absence of new data, avoiding overconfident predictions about distant futures
 
 ### 5.4 Limitations
@@ -511,7 +472,7 @@ This analysis uses Bayesian hierarchical modeling to project cohort fertility ra
 
 1. **Dramatic fertility decline**: Projected CFR drops from 3.10 (1934 cohort) to 0.78-0.89 (2000s cohorts), over 70% decline
 
-2. **Two-dimensional decline**: The extended model (v4.0) reveals fertility decline has **both** quantum and tempo components:
+2. **Two-dimensional decline**: The extended model (v4) reveals fertility decline has **both** quantum and tempo components:
    - **Quantum**: Baseline fertility (α) declining sharply for cohorts born after 1980
    - **Tempo**: Systematic postponement of childbearing (positive γ) for recent cohorts
 
@@ -582,12 +543,12 @@ While substantial uncertainty remains for incomplete cohorts, the model provides
 
 This project developed multiple model versions with increasing complexity:
 
-- **Version 3.0**: Base model with estimated hyperparameters (σ_α and σ_β)
-- **Version 4.0**: Extended model with cohort-specific timing shifts (γ)
+- **Version 3**: Base model with estimated hyperparameters (σ_α and σ_β)
+- **Version 4**: Extended model with cohort-specific timing shifts (γ)
 
-The main report presents results from **Version 4.0**, which provides the most complete picture of fertility dynamics by separating quantum (total fertility) from tempo (timing) effects. This appendix compares v3.0 and v4.0 to document the rationale for model selection.
+The main report presents results from **Version 4**, which provides the most complete picture of fertility dynamics by separating quantum (total fertility) from tempo (timing) effects. This appendix compares v3 and v4 to document the rationale for model selection.
 
-*Note: An earlier Version 2.0 with fixed σ_α was also developed but is not discussed here; it produced nearly identical results to v3.0 (see sections A.2-A.4 for details).*
+*Note: An earlier Version 2 with fixed σ_α was also developed but is not discussed here; it produced nearly identical results to v3 (see sections A.2-A.4 for details).*
 
 ### A.2 Differences Between Versions 2.0 and 3.0
 
@@ -600,7 +561,7 @@ Both model versions use the same basic structure (log-linear model with Gaussian
 
 **Rationale**: Initially set σ_α to a small fixed value based on exploratory analysis, while allowing σ_β to be estimated.
 
-#### Version 3.0
+#### Version 3
 **Hyperparameter specification**:
 - `σ_α ~ HalfNormal(0.1)` (estimated)
 - `σ_β ~ HalfNormal(0.3)` (estimated)
@@ -611,7 +572,7 @@ Both model versions use the same basic structure (log-linear model with Gaussian
 
 The two versions produce nearly identical predictions:
 
-| Metric | v2.0 | v3.0 | Difference |
+| Metric | v2 | v3 | Difference |
 |--------|------|------|------------|
 | **Hyperparameters** |
 | σ_α | 0.050 (fixed) | 0.094 ± 0.015 | Data suggests higher |
@@ -627,9 +588,9 @@ The two versions produce nearly identical predictions:
 
 **Key observation**: Despite different hyperparameter values, CFR predictions differ by at most 0.003 children per woman (< 0.5%), demonstrating robustness.
 
-### A.3 Decision Rationale: Why Version 3.0?
+### A.3 Decision Rationale: Why Version 3?
 
-We selected Version 3.0 as the primary model for the following reasons:
+We selected Version 3 as the primary model for the following reasons:
 
 **1. Statistical Principles**
 - Estimating hyperparameters is the standard Bayesian approach
@@ -656,7 +617,7 @@ We selected Version 3.0 as the primary model for the following reasons:
 - Standard practice in hierarchical Bayesian modeling
 - Addresses potential reviewer concerns about fixed hyperparameters
 
-### A.4 Sensitivity Analysis (v2.0 vs v3.0)
+### A.4 Sensitivity Analysis (v2 vs v3)
 
 The minimal differences between versions demonstrates that results are robust to:
 - Choice of hyperparameter priors
@@ -665,16 +626,16 @@ The minimal differences between versions demonstrates that results are robust to
 
 This robustness is important for interpretation: the projected fertility decline is not an artifact of modeling choices but a strong signal in the data.
 
-### A.5 Version 4.0: Extended Model with Timing Shifts
+### A.5 Version 4: Extended Model with Timing Shifts
 
-Version 4.0 extends the base model to explicitly capture cohort-specific changes in the timing of childbearing.
+Version 4 extends the base model to explicitly capture cohort-specific changes in the timing of childbearing.
 
 #### Model Structure
 
-**Base model (v3.0)**:
+**Base model (v3)**:
 $$\log(\lambda_{ij}) = \alpha_i + \beta_j$$
 
-**Extended model (v4.0)**:
+**Extended model (v4)**:
 $$\log(\lambda_{ij}) = \alpha_i + \beta_j + \gamma_i \times \text{age\_centered}_j$$
 
 Where:
@@ -700,9 +661,9 @@ The additive formulation (in log-space) ensures:
 - Standard log-linear model interpretation
 - No need for explicit positivity constraints
 
-### A.6 Comparison: Version 3.0 vs 4.0
+### A.6 Comparison: Version 3 vs 4
 
-|| Metric | v3.0 | v4.0 | Difference/Notes |
+|| Metric | v3 | v4 | Difference/Notes |
 ||--------|------|------|------------------|
 || **Model Complexity** |
 || Parameters | 46 | 77 | +31 (adds 30 γ + 1 σ_γ) |
@@ -721,32 +682,32 @@ The additive formulation (in log-space) ensures:
 || 2009 cohort | 0.871 | 0.786 | -0.085 (notable) |
 || Lowest CFR | 0.697 (2003) | 0.644 (2006) | Lower minimum |
 || **Convergence** |
-|| Max r̂ | 1.01 | 1.00 | Excellent both, v4.0 perfect |
+|| Max r̂ | 1.01 | 1.00 | Excellent both, v4 perfect |
 || Min ESS_bulk | 800 | 745 | Excellent both (>400 threshold) |
 || Params with ESS<400 | 0 | 0 | All parameters well-sampled |
 || **Goodness of Fit** |
-|| Pseudo-R² | 0.997 | 0.999 | v4.0 slightly better |
-|| MAE | 172.8 | 127.0 | v4.0 lower error |
-|| RMSE | 232.9 | 167.4 | v4.0 lower error |
-|| MAPE | 12.23% | 11.12% | v4.0 better prediction |
-|| WAIC (ELPD) | -2844.4 | -2406.4 | v4.0 better fit (higher ELPD) |
-|| LOO (ELPD) | -2845.6 | -2415.7 | v4.0 better fit |
+|| Pseudo-R² | 0.997 | 0.999 | v4 slightly better |
+|| MAE | 172.8 | 127.0 | v4 lower error |
+|| RMSE | 232.9 | 167.4 | v4 lower error |
+|| MAPE | 12.23% | 11.12% | v4 better prediction |
+|| WAIC (ELPD) | -2844.4 | -2406.4 | v4 better fit (higher ELPD) |
+|| LOO (ELPD) | -2845.6 | -2415.7 | v4 better fit |
 
 **Key observations**:
 1. **Timing shifts detected**: Clear systematic pattern in γ (postponement in recent cohorts)
-2. **Improved model fit**: v4.0 shows better goodness of fit metrics across the board:
+2. **Improved model fit**: v4 shows better goodness of fit metrics across the board:
    - Pseudo-R² improves from 0.997 to 0.999
    - MAPE decreases from 12.23% to 11.12%
-   - WAIC and LOO strongly favor v4.0 (ΔELPD ≈ 430)
+   - WAIC and LOO strongly favor v4 (ΔELPD ≈ 430)
 3. **Modest CFR changes**: Most differences < 0.02, except youngest cohorts
 4. **Higher complexity**: 31 additional parameters, but convergence remains excellent:
    - All 77 parameters have ESS_bulk > 400
    - Perfect convergence (max r̂ = 1.00)
 5. **Cohort interpretation**: Timing separated from quantity reveals distinct patterns
 
-### A.7 Decision Rationale: Why Version 4.0?
+### A.7 Decision Rationale: Why Version 4?
 
-We selected Version 4.0 as the primary model for the following reasons:
+We selected Version 4 as the primary model for the following reasons:
 
 **1. Demographic Insight**
 - Explicitly separates **quantum** (how many) from **tempo** (when)
@@ -763,7 +724,7 @@ We selected Version 4.0 as the primary model for the following reasons:
 **3. Model Fit**
 - Perfect convergence (max r̂ = 1.00, all parameters)
 - Excellent ESS for all parameters (min = 745, all > 400 threshold)
-- **Superior goodness of fit**: R² = 0.999, MAPE = 11.12%, ΔWAIC ≈ 438 favoring v4.0
+- **Superior goodness of fit**: R² = 0.999, MAPE = 11.12%, ΔWAIC ≈ 438 favoring v4
 - More flexible model better captures cohort-specific age patterns
 
 **4. Theoretical Motivation**
@@ -772,7 +733,7 @@ We selected Version 4.0 as the primary model for the following reasons:
 - May help distinguish recoverable tempo effects from quantum decline
 
 **5. Robustness**
-- CFR projections largely similar to v3.0 (most differences < 2%)
+- CFR projections largely similar to v3 (most differences < 2%)
 - Core findings (dramatic decline for recent cohorts) unchanged
 - Adds new dimension without overturning previous results
 
@@ -781,12 +742,12 @@ We selected Version 4.0 as the primary model for the following reasons:
 - **Computation**: Requires more MCMC draws to achieve adequate ESS (though still fast with nutpie)
 - **Interpretability**: More parameters to explain, but each has clear meaning
 
-**Limitations of v4.0**:
+**Limitations of v4**:
 - Linear timing shift (γ × age_centered) is a simplification
 - Doesn't fully separate recoverable "tempo effect" from permanent quantum decline
 - Requires more data to estimate additional parameters reliably
 
-**Conclusion**: Version 4.0 is the recommended primary model. It provides richer demographic insights by explicitly modeling the postponement of childbearing, achieves **superior model fit** (ΔWAIC ≈ 438, R² = 0.999), maintains perfect convergence with excellent ESS across all 77 parameters, and produces projections that are substantively similar to v3.0 for most cohorts while revealing important timing patterns that are obscured in the base model. The timing shifts (γ) are not only statistically significant but also demographically meaningful, capturing the well-documented postponement transition in recent cohorts.
+**Conclusion**: Version 4 is the recommended primary model. It provides richer demographic insights by explicitly modeling the postponement of childbearing, achieves **superior model fit** (ΔWAIC ≈ 438, R² = 0.999), maintains perfect convergence with excellent ESS across all 77 parameters, and produces projections that are substantively similar to v3 for most cohorts while revealing important timing patterns that are obscured in the base model. The timing shifts (γ) are not only statistically significant but also demographically meaningful, capturing the well-documented postponement transition in recent cohorts.
 
 ## Appendix B: Code and Reproducibility
 
@@ -795,8 +756,8 @@ All code for this project is available at: https://github.com/AllenDowney/BayesF
 **Key notebooks**:
 - `notebooks/process_cps.ipynb`: Data preprocessing pipeline
 - `notebooks/fertility_cps2.ipynb`: Model fitting and analysis (v2.0, comparison)
-- `notebooks/fertility_cps3.ipynb`: Model fitting and analysis (v3.0, comparison)
-- `notebooks/fertility_cps4.ipynb`: Model fitting and analysis (v4.0, primary)
+- `notebooks/fertility_cps3.ipynb`: Model fitting and analysis (v3, comparison)
+- `notebooks/fertility_cps4.ipynb`: Model fitting and analysis (v4, primary)
 
 **Requirements**:
 - Python 3.8+

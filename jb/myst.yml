@@ -9,6 +9,8 @@ project:
   github: https://github.com/AllenDowney/BayesFertility
   toc:
     - file: index.md
+    - file: blog_post.md
+      title: Blog Post
     - file: tech_report.md
       title: Technical Report
 
