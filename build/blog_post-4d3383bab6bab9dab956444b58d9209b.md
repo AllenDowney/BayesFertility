@@ -89,27 +89,35 @@ Unless something changes substantially and soon, US fertility is heading for his
 ## Possible Objections and Responses
 
 **Objection:** CPS fertility data undercounts births, especially among disadvantaged groups.
+
 Response: This analysis uses the CPS variable “children ever born” (FREVER), which records cumulative parity rather than recent birth events. Parity is generally reported accurately at all ages, especially compared to annual birth measures.
 
 **Objection:** You are assuming recent fertility declines will continue indefinitely.
+
 Response: The model does not impose a continued decline. Cohort effects are modeled as a Gaussian random walk, which assumes future cohorts will resemble recent ones in the absence of evidence. For the youngest cohorts, projections level off rather than continuing downward.
 
 **Objection:** Fertility timing has shifted later; these cohorts may still “catch up.”
+
 Response: An extended model that explicitly accounts for cohort-specific timing shifts fits the data better but produces similar completed fertility projections. Delayed childbearing alone is insufficient to explain the observed declines in cohort fertility.
 
 **Objection:** Immigration and compositional changes could raise future fertility.
+
 Response: Immigration affects period fertility rates more than completed cohort fertility. Immigrant fertility in the US has also declined substantially, and second-generation fertility converges quickly toward native-born levels. Large, sustained changes would be required to materially change these cohort projections.
 
 **Objection:** Economic or policy changes (childcare, housing, parental leave) could reverse the trend.
+
 Response: That is possible. The projections should be interpreted as conditional on current conditions persisting. But demographic trends exhibit inertia, and historically, large fertility reversals have been slow and rare even in the presence of policy interventions.
 
 **Objection:** A log-linear age–cohort model is too simple to capture fertility dynamics.
+
 Response: The model is intentionally parsimonious and is validated on cohorts with completed fertility. More complex models improve in-sample fit but do not materially change the projections for completed cohort fertility.
 
 **Objection:** CFR below 1 is implausibly low.
+
 Response: CFR measures the average number of children per woman across the entire cohort, including women with no children. CFRs below 1 are already observed in several high-income countries, including South Korea, and are demographically feasible.
 
 **Objection:** Survey weighting via resampling is ad hoc.
+
 Response: Resampling using survey weights is a standard approximation for incorporating complex survey designs in Bayesian models. The approach is documented in the technical report, and validation against external Census data suggests it performs well for this application.
 
 ---
