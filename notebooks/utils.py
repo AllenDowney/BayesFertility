@@ -19,54 +19,19 @@ from scipy.stats import beta, norm
 # Matplotlib Configuration
 # =============================================================================
 
-AIBM_COLORS = {
-    # AIBM brand colors
-    "light_gray": "#F3F4F3",
-    "medium_gray": "#767676",
-    "green": "#0B8569",
-    "light_green": "#AAC9B8",
-    "orange": "#C55300",
-    "light_orange": "#F4A26B",
-    "purple": "#9657A5",
-    "light_purple": "#CFBCD0",
-    "blue": "#4575D6",
-    "light_blue": "#C9D3E8",
-    # Additional colors from coolers.co
-    "dark_gray": "#404040",
-    "dark_purple": "#28112B",
-    "dark_green": "#002500",
-    "amber": "#F5BB00",
-    "oxford_blue": "#000022",
-    "bittersweet": "#FF6666",
-    "crimson": "#D62839",
-}
-
-
 def configure_plot_style():
-    """Configure the default matplotlib style for AIBM plots.
+    """Configure the default matplotlib style for plots.
 
     This function sets up the default style for plots, including:
     - Figure size and DPI
-    - Color scheme
     - Font settings
     - Grid and spine settings
-    - Tick settings
 
     The settings can be overridden for individual plots as needed.
     """
     # Figure size and DPI
     plt.rcParams["figure.dpi"] = 100
     plt.rcParams["figure.figsize"] = [6.75, 3.5]  # inches
-
-    # Default color cycle
-    colors = [
-        AIBM_COLORS["green"],
-        AIBM_COLORS["orange"],
-        AIBM_COLORS["blue"],
-        AIBM_COLORS["purple"],
-    ]
-    cycler = plt.cycler(color=colors)
-    plt.rc("axes", prop_cycle=cycler)
 
     # Font settings
     # Try to use PT Sans, fall back to system fonts if not available
@@ -83,22 +48,11 @@ def configure_plot_style():
 
     plt.rcParams["legend.fontsize"] = "small"
 
-    # Tick and label colors
-    plt.rcParams["axes.edgecolor"] = AIBM_COLORS["medium_gray"]
-    plt.rcParams["xtick.color"] = AIBM_COLORS["medium_gray"]
-    plt.rcParams["ytick.color"] = AIBM_COLORS["medium_gray"]
-    plt.rcParams["axes.labelcolor"] = AIBM_COLORS["medium_gray"]
-
     # Default spine settings (can be overridden per plot)
     plt.rcParams["axes.spines.top"] = False
     plt.rcParams["axes.spines.right"] = False
     plt.rcParams["axes.spines.left"] = False
     plt.rcParams["axes.spines.bottom"] = False
-
-    # Default grid settings (can be overridden per plot)
-    plt.rcParams["grid.color"] = AIBM_COLORS["light_gray"]
-    plt.rcParams["grid.linestyle"] = "-"
-    plt.rcParams["grid.linewidth"] = 1
     plt.rcParams["axes.grid"] = False  # Disable grid by default
     plt.rcParams["axes.grid.axis"] = "y"
 
@@ -536,28 +490,10 @@ def save_baseline_results(version, alpha_summary, beta_summary, cfr_df, cohort_l
         'hdi_upper': beta_summary['hdi_97%'].values
     })
     
-    # Prepare CFR data
-    if isinstance(cfr_df, pd.Series):
-        cfr_data = pd.DataFrame({
-            'cohort': cfr_df.index,
-            'mean': cfr_df.values
-        })
-    else:
-        # Assume DataFrame with 'cohort', 'mean', 'low', 'high' columns
-        # Use the 'cohort' column, not the index
-        cfr_data = pd.DataFrame({
-            'cohort': cfr_df['cohort'].values,
-            'mean': cfr_df['mean'].values
-        })
-        if 'low' in cfr_df.columns:
-            cfr_data['hdi_lower'] = cfr_df['low'].values
-        if 'high' in cfr_df.columns:
-            cfr_data['hdi_upper'] = cfr_df['high'].values
-    
     # Save to HDF5
     alpha_df.to_hdf(filename, key='alpha', mode='w')
     beta_df.to_hdf(filename, key='beta', mode='a')
-    cfr_data.to_hdf(filename, key='cfr_df', mode='a')
+    cfr_df.to_hdf(filename, key='cfr_df', mode='a')
     
     # Save metadata
     metadata = pd.Series({
