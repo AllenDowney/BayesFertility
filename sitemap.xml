@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<?xml-stylesheet type="text/xsl" href="http://localhost:3014/sitemap_style.xsl" ?>
+<?xml-stylesheet type="text/xsl" href="http://localhost:3015/sitemap_style.xsl" ?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>http://localhost:3014</loc>
+    <loc>http://localhost:3015</loc>
   </url>
   <url>
-    <loc>http://localhost:3014/blog-post</loc>
+    <loc>http://localhost:3015/blog-post</loc>
   </url>
   <url>
-    <loc>http://localhost:3014/tech-report</loc>
+    <loc>http://localhost:3015/tech-report</loc>
   </url>
 </urlset>
